@@ -23,7 +23,7 @@ type
   TListOfCondition = class
     Conditions: array of TCondition;
     constructor Create ();
-    procedure AddCondition (aCaption, aQueryFormat: string);
+    procedure AddCondition (aCaption, aQueryFormat, aParamFormat: string);
   end;
 
   { TFilter }
@@ -40,22 +40,21 @@ type
     Query: string;
     Tag: integer;
     FTable: TTableInfo;
-    ParamName: string;
     FieldType: TFieldType;
     constructor Create (aOwner: TWinControl; aTable: TTableInfo);
     destructor Destroy; override;
     procedure FilterInterfae (aOwner: TWinControl);
-    function GetQuery: string;
+    function GetQuery (aIndex: integer): string;
   end;
 
   { TListOfFilters }
 
   TListOfFilters = class
     Filters: array of TFilter;
-    constructor Create ();
     destructor Destroy; override;
     procedure AddFilter (aOwner: TWinControl; aTable: TTableInfo);
     procedure DeleteFilter (aIndex: integer);
+    procedure Clear();
     function CreateFQuery: string;
     function Count(): Integer;
   end;
@@ -70,37 +69,33 @@ var
 
 constructor TListOfCondition.Create;
 begin
-  AddCondition('>', ' %s.%s > ''%s'' ');
-  AddCondition('<', ' %s.%s < ''%s'' ');
-  AddCondition('>=', ' %s.%s >= ''%s'' ');
-  AddCondition('<=', ' %s.%s <= ''%s'' ');
-  AddCondition('=', ' %s.%s = ''%s'' ');
-  AddCondition('начинается на', ' %s.%s like ''%s%%'' ');
-  AddCondition('заканчивается на', ' %s.%s like ''%%%s'' ');
-  AddCondition('содержит', ' %s.%s like ''%%%s%%'' ');
+  AddCondition('>', ' %s.%s > :p%s', '%s');
+  AddCondition('<', ' %s.%s < :p%s', '%s');
+  AddCondition('>=', ' %s.%s >= :p%s', '%s');
+  AddCondition('<=', ' %s.%s <= :p%s', '%s');
+  AddCondition('=', ' %s.%s = :p%s', '%s');
+  AddCondition('начинается на', ' %s.%s like :p%s', '%s%%');
+  AddCondition('заканчивается на', ' %s.%s like :p%s', '%%%s');
+  AddCondition('содержит', ' %s.%s like :p%s', '%%%s%%');
 end;
 
-procedure TListOfCondition.AddCondition(aCaption, aQueryFormat: string);
+procedure TListOfCondition.AddCondition(aCaption, aQueryFormat,
+  aParamFormat: string);
 begin
   SetLength (Conditions, length (Conditions) + 1);
   Conditions[high (Conditions)].Caption := aCaption;
   Conditions[high (Conditions)].QueryFormat := aQueryFormat;
+  Conditions[high (Conditions)].ParamFormat := aParamFormat;
 end;
 
 { TListOfFilters }
-
-constructor TListOfFilters.Create;
-begin
-  inherited Create;
-end;
 
 destructor TListOfFilters.Destroy;
 var
   i: integer;
 begin
+  Clear();
   inherited Destroy;
-  for i := 0 to high (Filters) do
-    FreeAndNil (Filters[i]);
 end;
 
 procedure TListOfFilters.AddFilter(aOwner: TWinControl; aTable: TTableInfo);
@@ -124,16 +119,27 @@ begin
   SetLength (Filters, length (Filters) - 1);
 end;
 
+procedure TListOfFilters.Clear;
+var
+  i: Integer;
+begin
+  for i := high (Filters) to 0 do begin
+    FreeAndNil (Filters[i]);
+    SetLength (Filters, length (Filters) - 1);
+  end;
+end;
+
 function TListOfFilters.CreateFQuery: string;
 var
   i: integer;
 begin
-  Result += ' where ';
-  for i := 0 to high (Filters) - 1 do begin
-    Result += Filters[i].GetQuery;
-    Result += ' and ';
+  Result += ' Where ';
+  for i := 0 to high (Filters) do begin
+    Result += Filters[i].GetQuery (i);
+    if (i <> high (Filters)) then Result += ' and ';
   end;
-  Result += Filters[high (Filters)].GetQuery;
+
+  ShowMessage (Result);
 end;
 
 function TListOfFilters.Count: Integer;
@@ -203,18 +209,18 @@ begin
   end;
 end;
 
-function TFilter.GetQuery: string;
+function TFilter.GetQuery(aIndex: integer): string;
 begin
   if (not FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].Reference) then
      Result += Format(FCondition.Conditions[FComBoCondition.ItemIndex].QueryFormat,
          [FTable.Name, FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].Name,
-         FEdit.Caption])
+         IntToStr (aIndex)])
      else
      Result += Format(FCondition.Conditions[FComBoCondition.ItemIndex].QueryFormat,
          [FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].ReferenceTable,
          FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].ReferenceColumn,
-         FEdit.Caption]);
-  //ShowMessage (Result);
+         IntToStr (aIndex)]);
+  ShowMessage (Result);
 end;
 
 end.

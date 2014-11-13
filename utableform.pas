@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, sqldb, db, FileUtil, Forms, Controls, Graphics, Dialogs,
-  DBGrids, ExtCtrls, Buttons, StdCtrls, metadata, ufilter, querycreate,
+  DBGrids, ExtCtrls, Buttons, metadata, ufilter, querycreate,
   ueditform;
 
 type
@@ -42,6 +42,7 @@ type
     procedure UpdateBitBtnClick(Sender: TObject);
   private
     Order: Boolean;
+    EditForms: array of TEditForm;
   public
     MTable: TTableInfo;
     constructor Create (aOwner: TControl; aTable: TTableInfo);
@@ -64,9 +65,8 @@ end;
 
 procedure TTableForm.ResetBitBtnClick(Sender: TObject);
 begin
-  if (length (ListOfFilters.Filters) <> 0) then ListOfFilters.Destroy;
+  ListOfFilters.Clear();
   ShowTable (SQLQuery, DBGrid, MTable);
-  ListOfFilters := TListOfFilters.Create;
 end;
 
 procedure TTableForm.STimerTimer(Sender: TObject);
@@ -78,9 +78,10 @@ procedure TTableForm.UpdateBitBtnClick(Sender: TObject);
 var
   i: integer;
   flag: Boolean;
+  Param: array of string;
 begin
   with ListOfFilters do begin
-    if (length (Filters) <> 0) then begin
+    if (Count() <> 0) then begin
       for i := 0 to high (Filters) do begin
         flag := true;
         if ((Filters[i].FComBoColumn.Caption = '') or
@@ -91,10 +92,19 @@ begin
           break;
         end;
       end;
-      if (flag) then ShowFilterTable (SQLQuery, DBGrid, MTable, CreateFQuery);
-    end
-    else
-      ShowMessage ('Добавьте фильтры');
+      if (flag) then begin
+        for i := 0 to high (Filters) do begin
+          with (Filters[i]) do begin
+            SetLength (Param, length (Param) + 1);
+            Param[i] := Format (FCondition.Conditions[FComBoCondition.ItemIndex].ParamFormat,
+            [FEdit.Caption]);
+          end;
+        end;
+        ShowFilterTable (SQLQuery, DBGrid, MTable, CreateFQuery, Param);
+      end
+      else
+        ShowMessage ('Добавьте фильтры');
+    end;
   end;
 end;
 
@@ -106,23 +116,37 @@ end;
 
 procedure TTableForm.DBGridDblClick(Sender: TObject);
 var
+  i: integer;
   NewForm: TEditForm;
+  flag: Boolean;
 begin
-  NewForm := TEditForm.Create (TableForm, MTable, SQLQuery, DBGrid, SQLTransaction, false);
-  NewForm.Show;
+
+  flag := true;
+  for i := 0 to high (EditForms) do begin
+    if (SQLQuery.Fields[0].AsInteger = EditForms[i].ID) then begin
+      flag := false;
+      break;
+    end;
+  end;
+
+  if (flag) then begin
+    SetLength (EditForms, length (EditForms) + 1);
+    EditForms[high (EditForms)] := TEditForm.Create (TableForm, MTable, SQLQuery, DBGrid, SQLTransaction, false);
+    EditForms[high (EditForms)].Show;
+  end;
+
 end;
 
 procedure TTableForm.DBGridTitleClick(Column: TColumn);
 var
-  Query: String;
+  Query: string;
 begin
   Order := not Order;
   Query := '';
   if (ListOfFilters.Count() <> 0) then
     Query := ListOfFilters.CreateFQuery;
 
-  ShowSortTable (SQLQuery, DBGrid, MTable, Query,
-             Column.Index, Order);
+  ShowSortTable (SQLQuery, DBGrid, MTable, Query, Column.Index, Order);
 end;
 
 procedure TTableForm.InsertDBBitBtnClick(Sender: TObject);
@@ -162,9 +186,9 @@ procedure TTableForm.FiltersCloseClick(Sender: TObject);
 begin
   STimer.Enabled := true;
   AddFilterBitBtn.Enabled := true;
-  if (length (ListOfFilters.Filters) <> 0) then ListOfFilters.Destroy;
+  //if (length (ListOfFilters.Filters) <> 0) then ListOfFilters.Destroy;
   Datasource.DataSet.Active := true;
-  ShowTable (SQLQuery, DBGrid, MTable);
+  //ShowTable (SQLQuery, DBGrid, MTable);
 end;
 
 procedure TTableForm.FormClose(Sender: TObject; var CloseAction: TCloseAction);

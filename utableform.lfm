@@ -1,14 +1,14 @@
 object TableForm: TTableForm
-  Left = 347
+  Left = 1497
   Height = 394
-  Top = 303
-  Width = 408
+  Top = 608
+  Width = 407
   BorderStyle = bsSingle
   Caption = 'TableForm'
   ClientHeight = 394
-  ClientWidth = 408
+  ClientWidth = 407
   OnClose = FormClose
-  LCLVersion = '1.2.2.0'
+  LCLVersion = '1.0.14.0'
   object DBGrid: TDBGrid
     Left = 8
     Height = 316
@@ -31,11 +31,11 @@ object TableForm: TTableForm
     TabOrder = 1
   end
   object AddFilterBitBtn: TBitBtn
-    Left = 25
+    Left = 376
     Height = 39
-    Top = 24
-    Width = 119
-    Caption = 'Добавить фильтры'
+    Top = 16
+    Width = 24
+    Caption = '->'
     Color = clWhite
     OnClick = AddFilterBitBtnClick
     TabOrder = 2
@@ -86,9 +86,9 @@ object TableForm: TTableForm
     TabOrder = 7
   end
   object InsertDBBitBtn: TBitBtn
-    Left = 152
+    Left = 16
     Height = 39
-    Top = 24
+    Top = 16
     Width = 65
     Caption = 'Вставить'
     OnClick = InsertDBBitBtnClick
@@ -102,7 +102,7 @@ object TableForm: TTableForm
     left = 120
     top = 400
   end
-  object Datasource: TDataSource
+  object Datasource: TDatasource
     DataSet = SQLQuery
     left = 64
     top = 400

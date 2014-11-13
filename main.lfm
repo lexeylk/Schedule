@@ -1,12 +1,12 @@
 object MainForm: TMainForm
-  Left = 772
+  Left = 1654
   Height = 19
-  Top = 118
+  Top = 680
   Width = 250
   Caption = 'MainForm'
   Menu = MainMenu
   OnCreate = FormCreate
-  LCLVersion = '1.2.2.0'
+  LCLVersion = '1.0.14.0'
   object MainMenu: TMainMenu
     top = 208
     object MenuFile: TMenuItem

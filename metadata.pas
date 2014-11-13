@@ -106,22 +106,36 @@ begin
                      false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
            AddColumn('Название', 'Name', ftString, 30,
                      false, true, NOT_STRING_VALUE, NOT_STRING_VALUE);
+  AddTable ('Неделя', 'Weeks').
+           AddColumn('ID', 'ID', ftInteger, 10,
+                     false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
+           AddColumn('Тип недели', 'Name', ftString, 100,
+                     false, true, NOT_STRING_VALUE, NOT_STRING_VALUE);
+  AddTable ('Расписание звонков', 'Times').
+           AddColumn('ID', 'ID', ftInteger, 10,
+                     false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
+           AddColumn('Время', 'Begin_End_Time', ftString, 100,
+                     false, true, NOT_STRING_VALUE, NOT_STRING_VALUE);
 
   AddTable ('Расписание', 'Schedule_items').
            AddColumn ('ID', 'ID', ftInteger, 10,
                      false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
-           AddColumn ('Преподаватель', 'Professor_id', ftString, 110,
-                     true, true, 'Name', 'Professors').
            AddColumn ('Предмет', 'Subject_id', ftString, 385,
                      true, true, 'Name', 'Subjects').
            AddColumn ('Тип', 'Subject_type_id', ftString, 30,
                      true, true, 'Name', 'Subject_types').
-           AddColumn ('Кабинет', 'Room_id', ftString, 55,
-                     true, true, 'Name', 'Rooms').
+           AddColumn ('Преподаватель', 'Professor_id', ftString, 110,
+                     true, true, 'Name', 'Professors').
+           AddColumn ('Время', 'Time_id', ftString, 90,
+                     true, true, 'Begin_End_Time', 'Times').
+           AddColumn ('День недели', 'Day_id', ftDate, 90,
+                     true, true, 'Name', 'Days').
            AddColumn ('Группа', 'Group_id', ftString, 70,
                      true, true, 'Name', 'Groups').
-           AddColumn ('День недели', 'Day_id', ftDate, 90,
-                     true, true, 'Name', 'Days');
+           AddColumn ('Кабинет', 'Room_id', ftString, 55,
+                     true, true, 'Name', 'Rooms').
+           AddColumn ('Неделя', 'Week_id', ftString, 90,
+                     true, true, 'Name', 'Weeks');
 
 end;
 
