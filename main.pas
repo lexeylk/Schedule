@@ -6,13 +6,14 @@ interface
 
 uses
   Classes, SysUtils, IBConnection, sqldb, FileUtil, Forms, Controls, Graphics,
-  Dialogs, metadata, utableform, Menus, querycreate;
+  Dialogs, metadata, utableform, Menus, StdCtrls, querycreate, UScheduleForm;
 
 type
 
   { TMainForm }
 
   TMainForm = class(TForm)
+    ScheduleButton: TButton;
     IBConnection: TIBConnection;
     MainMenu: TMainMenu;
     MenuFile: TMenuItem;
@@ -23,6 +24,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure MenuAboutClick(Sender: TObject);
     procedure NewFormCreate(Sender: TObject);
+    procedure ScheduleButtonClick(Sender: TObject);
   private
     { private declarations }
   public
@@ -79,6 +81,11 @@ begin
   NewForm.Show;
   with NewForm do
        ShowTable (SQLQuery, DBGrid, MTable);
+end;
+
+procedure TMainForm.ScheduleButtonClick(Sender: TObject);
+begin
+  ScheduleForm.Show;
 end;
 
 end.

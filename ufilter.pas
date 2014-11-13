@@ -123,9 +123,11 @@ procedure TListOfFilters.Clear;
 var
   i: Integer;
 begin
-  for i := high (Filters) to 0 do begin
-    FreeAndNil (Filters[i]);
-    SetLength (Filters, length (Filters) - 1);
+  if Count() <> 0 then begin
+     for i := high (Filters) to 0 do begin
+       FreeAndNil (Filters[i]);
+       SetLength (Filters, length (Filters) - 1);
+     end;
   end;
 end;
 
@@ -139,7 +141,7 @@ begin
     if (i <> high (Filters)) then Result += ' and ';
   end;
 
-  ShowMessage (Result);
+  //ShowMessage (Result);
 end;
 
 function TListOfFilters.Count: Integer;
@@ -220,7 +222,7 @@ begin
          [FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].ReferenceTable,
          FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].ReferenceColumn,
          IntToStr (aIndex)]);
-  ShowMessage (Result);
+  //ShowMessage (Result);
 end;
 
 end.

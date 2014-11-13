@@ -1,12 +1,12 @@
 object TableForm: TTableForm
-  Left = 1497
-  Height = 394
-  Top = 608
-  Width = 407
+  Left = 598
+  Height = 400
+  Top = 261
+  Width = 408
   BorderStyle = bsSingle
   Caption = 'TableForm'
-  ClientHeight = 394
-  ClientWidth = 407
+  ClientHeight = 400
+  ClientWidth = 408
   OnClose = FormClose
   LCLVersion = '1.0.14.0'
   object DBGrid: TDBGrid
@@ -33,7 +33,7 @@ object TableForm: TTableForm
   object AddFilterBitBtn: TBitBtn
     Left = 376
     Height = 39
-    Top = 16
+    Top = 24
     Width = 24
     Caption = '->'
     Color = clWhite
@@ -86,9 +86,9 @@ object TableForm: TTableForm
     TabOrder = 7
   end
   object InsertDBBitBtn: TBitBtn
-    Left = 16
+    Left = 8
     Height = 39
-    Top = 16
+    Top = 24
     Width = 65
     Caption = 'Вставить'
     OnClick = InsertDBBitBtnClick

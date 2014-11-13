@@ -1,0 +1,113 @@
+object ScheduleForm: TScheduleForm
+  Left = 121
+  Height = 931
+  Top = 39
+  Width = 1674
+  Caption = 'ScheduleForm'
+  ClientHeight = 931
+  ClientWidth = 1674
+  OnCreate = FormCreate
+  LCLVersion = '1.0.14.0'
+  object Grid: TDrawGrid
+    Left = 0
+    Height = 779
+    Top = 152
+    Width = 1674
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    ExtendedSelect = False
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSizing, goColSizing, goSmoothScroll]
+    TabOrder = 0
+    OnDblClick = GridDblClick
+    OnDrawCell = GridDrawCell
+  end
+  object XFieldCmbBox: TComboBox
+    Left = 48
+    Height = 23
+    Top = 8
+    Width = 139
+    ItemHeight = 15
+    Style = csDropDownList
+    TabOrder = 1
+  end
+  object YFieldCmbBox: TComboBox
+    Left = 224
+    Height = 23
+    Top = 8
+    Width = 136
+    ItemHeight = 15
+    Style = csDropDownList
+    TabOrder = 2
+  end
+  object Label1: TLabel
+    Left = 32
+    Height = 16
+    Top = 13
+    Width = 11
+    Caption = 'X:'
+    ParentColor = False
+  end
+  object Label2: TLabel
+    Left = 208
+    Height = 16
+    Top = 13
+    Width = 11
+    Caption = 'Y:'
+    ParentColor = False
+  end
+  object RefreshButton: TButton
+    Left = 400
+    Height = 23
+    Top = 8
+    Width = 140
+    Caption = 'Обновить'
+    OnClick = RefreshButtonClick
+    TabOrder = 3
+  end
+  object ScrollBox1: TScrollBox
+    Left = 568
+    Height = 109
+    Top = 24
+    Width = 840
+    HorzScrollBar.Page = 836
+    VertScrollBar.Page = 105
+    TabOrder = 4
+  end
+  object AddFilterBtn: TBitBtn
+    Left = 1431
+    Height = 38
+    Top = 8
+    Width = 134
+    Caption = 'Добавить фильтр'
+    OnClick = AddFilterBtnClick
+    TabOrder = 5
+  end
+  object DeleteBtn: TBitBtn
+    Left = 1431
+    Height = 38
+    Top = 56
+    Width = 134
+    Caption = 'Удалить фильтр'
+    TabOrder = 6
+  end
+  object ResetBtn: TBitBtn
+    Left = 1431
+    Height = 38
+    Top = 104
+    Width = 134
+    Caption = 'Сброс'
+    TabOrder = 7
+  end
+  object SQLQuery: TSQLQuery
+    FieldDefs = <>
+    Database = MainForm.IBConnection
+    Transaction = TableForm.SQLTransaction
+    Params = <>
+    DataSource = DataSource
+    left = 512
+    top = 8
+  end
+  object DataSource: TDatasource
+    left = 472
+    top = 8
+  end
+end

@@ -120,8 +120,7 @@ var
   NewForm: TEditForm;
   flag: Boolean;
 begin
-
-  flag := true;
+  {flag := true;
   for i := 0 to high (EditForms) do begin
     if (SQLQuery.Fields[0].AsInteger = EditForms[i].ID) then begin
       flag := false;
@@ -133,8 +132,9 @@ begin
     SetLength (EditForms, length (EditForms) + 1);
     EditForms[high (EditForms)] := TEditForm.Create (TableForm, MTable, SQLQuery, DBGrid, SQLTransaction, false);
     EditForms[high (EditForms)].Show;
-  end;
-
+  end;}
+  NewForm := TEditForm.Create (TableForm, MTable, SQLQuery, DBGrid, SQLTransaction, false);
+  NewForm.Show;
 end;
 
 procedure TTableForm.DBGridTitleClick(Column: TColumn);

@@ -23,6 +23,7 @@ type
     VisableColumn: Boolean;
     ReferenceColumn: string;
     ReferenceTable: string;
+    AliasName: string;
   end;
 
   { TTableInfo }
@@ -174,10 +175,13 @@ begin
     Reference := aReference;
     VisableColumn := aVisible;
 
+
     if (Reference) then begin
       ReferenceTable := aReferenceTable;
       ReferenceColumn := aReferenceColumn;
     end;
+
+    AliasName := Self.Name + aName;
 
     Size := aSize; FieldType := aFieldType;
   end;
