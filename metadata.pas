@@ -1,6 +1,6 @@
 unit metadata;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$R+}
 
 interface
 
@@ -50,7 +50,7 @@ implementation
 
 { TListOfTable }
 
-constructor TListOfTable.Create;
+constructor TListOfTable.Create();
 begin
 
   AddTable ('Преподаватели', 'Professors').

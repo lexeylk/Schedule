@@ -1,7 +1,7 @@
 object MainForm: TMainForm
-  Left = 282
+  Left = 606
   Height = 20
-  Top = 130
+  Top = 123
   Width = 250
   Caption = 'MainForm'
   Menu = MainMenu
@@ -25,13 +25,14 @@ object MainForm: TMainForm
     end
   end
   object IBConnection: TIBConnection
-    Connected = True
+    Connected = False
     LoginPrompt = False
-    DatabaseName = 'F:\SCHEDULE.FDB'
+    DatabaseName = 'C:\SCHEDULE.FDB'
     KeepConnection = False
     Password = 'masterkey'
     Transaction = SQLTransaction
     UserName = 'sysdba'
+    CharSet = 'UTF-8'
     LogEvents = []
     left = 38
     top = 196

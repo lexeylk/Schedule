@@ -1,33 +1,112 @@
 object TableForm: TTableForm
-  Left = 34
-  Height = 321
-  Top = 213
-  Width = 516
+  Left = 905
+  Height = 449
+  Top = 223
+  Width = 406
   Caption = 'TableForm'
-  ClientHeight = 321
-  ClientWidth = 516
+  ClientHeight = 449
+  ClientWidth = 406
+  OnClose = FormClose
   LCLVersion = '1.0.14.0'
   object DBGrid: TDBGrid
-    Left = 32
-    Height = 244
-    Top = 24
-    Width = 456
+    Left = 8
+    Height = 316
+    Top = 72
+    Width = 392
     Color = clWindow
     Columns = <>
     DataSource = Datasource
     TabOrder = 0
+    OnDblClick = DBGridDblClick
+    OnTitleClick = DBGridTitleClick
+  end
+  object FilterScrollBox: TScrollBox
+    Left = 416
+    Height = 316
+    Top = 72
+    Width = 392
+    HorzScrollBar.Page = 388
+    VertScrollBar.Page = 312
+    TabOrder = 1
+  end
+  object AddFilterBitBtn: TBitBtn
+    Left = 25
+    Height = 39
+    Top = 24
+    Width = 119
+    Caption = 'Добавить фильтры'
+    Color = clWhite
+    OnClick = AddFilterBitBtnClick
+    TabOrder = 2
+  end
+  object FilterBitBtn: TBitBtn
+    Left = 416
+    Height = 39
+    Top = 24
+    Width = 112
+    Caption = 'Новый фильтр'
+    OnClick = FilterBitBtnClick
+    TabOrder = 3
+  end
+  object UpdateBitBtn: TBitBtn
+    Left = 712
+    Height = 39
+    Top = 24
+    Width = 42
+    Caption = 'Обновить'
+    OnClick = UpdateBitBtnClick
+    TabOrder = 4
+  end
+  object DestroyBitBtn: TBitBtn
+    Left = 632
+    Height = 39
+    Top = 24
+    Width = 44
+    Caption = 'Удалить'
+    OnClick = DestroyBitBtnClick
+    TabOrder = 5
+  end
+  object FiltersClose: TBitBtn
+    Left = 552
+    Height = 39
+    Top = 24
+    Width = 41
+    Caption = 'Закрыть'
+    OnClick = FiltersCloseClick
+    TabOrder = 6
+  end
+  object ResetBitBtn: TBitBtn
+    Left = 776
+    Height = 39
+    Top = 24
+    Width = 32
+    Caption = 'Сброс'
+    OnClick = ResetBitBtnClick
+    TabOrder = 7
   end
   object SQLQuery: TSQLQuery
     FieldDefs = <>
     Database = MainForm.IBConnection
     Transaction = MainForm.SQLTransaction
     Params = <>
-    left = 16
-    top = 288
+    left = 120
+    top = 400
   end
   object Datasource: TDatasource
     DataSet = SQLQuery
-    left = 68
-    top = 288
+    left = 64
+    top = 400
+  end
+  object FTimer: TTimer
+    Interval = 1
+    OnTimer = FTimerTimer
+    left = 16
+    top = 400
+  end
+  object STimer: TTimer
+    Interval = 1
+    OnTimer = STimerTimer
+    left = 167
+    top = 400
   end
 end

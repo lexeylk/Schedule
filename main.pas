@@ -1,6 +1,6 @@
 unit main;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+} {$R+}
 
 interface
 
@@ -81,7 +81,8 @@ begin
   NewForm.Caption := ListOfTable.GetTableCaption[index];
   NewForm.MTable := ListOfTable.TableInfos[index];
   NewForm.Show;
-  ShowTable (NewForm);
+  with NewForm do
+    ShowTable (SQLQuery, DBGrid, MTable);
 end;
 
 end.

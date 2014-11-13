@@ -1,73 +1,102 @@
 unit querycreate;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$R+}
 
 interface
 
 uses
-  Classes, SysUtils, sqldb, FileUtil, Forms, Controls, Graphics, Dialogs, utableform;
+  Classes, SysUtils, sqldb, FileUtil, Forms, Controls, DBGrids, Graphics,
+  Dialogs, metadata;
 
-procedure ShowTable (aTableForm: TTableForm);
-procedure SetQuery (aTableForm: TTableForm);
-function CreateQuery (aTableForm: TTableForm): string;
-procedure SetCaption (aTableForm: TTableForm);
+procedure ShowTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid; aTable: TTableInfo);
+procedure ShowFilterTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
+                          aTable: TTableInfo; aFQuery: string);
+procedure ShowSortTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
+                          aTable: TTableInfo; aFQuery: string; aIndex: integer;
+                          aOrder: Boolean);
+procedure SetQuery (aSQLQuery: TSQLQuery; aQuery: string);
+function CreateQuery (aTable: TTableInfo): string;
+procedure SetCaption (aDBGrid: TDBGrid; aTable: TTableInfo);
 
 implementation
 
-procedure ShowTable(aTableForm: TTableForm);
+procedure ShowTable(aSQLQuery: TSQLQuery; aDBGrid: TDBGrid; aTable: TTableInfo);
 begin
-  SetQuery (aTableForm);
-  SetCaption (aTableForm);
+  SetQuery (aSQLQuery, CreateQuery (aTable));
+  SetCaption (aDBGrid, aTable);
 end;
 
-procedure SetQuery(aTableForm: TTableForm);
+procedure ShowFilterTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
+                          aTable: TTableInfo; aFQuery: string);
 begin
-  with aTableForm.SQLQuery do begin
+  SetQuery (aSQLQuery, CreateQuery (aTable) + aFQuery);
+  SetCaption (aDBGrid, aTable);
+end;
+
+procedure ShowSortTable(aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
+  aTable: TTableInfo; aFQuery: string; aIndex: integer; aOrder: Boolean);
+begin
+  if (aOrder) then
+    SetQuery (aSQLQuery, CreateQuery (aTable) + aFQuery + ' Order By ' +
+              aTable.Name + '.' + aTable.ColumnInfos[aIndex].Name)
+  else
+    SetQuery (aSQLQuery, CreateQuery (aTable) + aFQuery + ' Order By ' +
+              aTable.Name + '.' + aTable.ColumnInfos[aIndex].Name + ' Desc ');
+
+  SetCaption (aDBGrid, aTable);
+end;
+
+procedure SetQuery(aSQLQuery: TSQLQuery; aQuery: string);
+begin
+  //ShowMessage (aQuery);
+  with aSQLQuery do begin
     Close;
     Params.Clear;
-    SQL.Text := CreateQuery (aTableForm);
+    SQL.Text := aQuery;
     Open;
   end;
 end;
 
-function CreateQuery (aTableForm: TTableForm): string;
+function CreateQuery (aTable: TTableInfo): string;
 var
   i: integer;
 begin
   Result := 'Select ';
 
-  with aTableForm.MTable do begin
-      for i := 0 to High(ColumnInfos) do begin
-        if (ColumnInfos[i].Reference) then
-          Result += ColumnInfos[i].ReferenceTable + '.' +  ColumnInfos[i].ReferenceColumn
-        else
-          Result += Name + '.' + ColumnInfos[i].Name + ' ';
-        if i < High(ColumnInfos) then Result += ', ';
-      end;
+  with aTable do begin
+    for i := 0 to High(ColumnInfos) do begin
+      if (ColumnInfos[i].Reference) then
+        Result += ColumnInfos[i].ReferenceTable + '.' +
+        ColumnInfos[i].ReferenceColumn
+      else
+        Result += Name + '.' + ColumnInfos[i].Name + ' ';
+      if i < High(ColumnInfos) then Result += ', ';
+    end;
 
     Result += ' From ' + Name;
+
     for i := 0 to High(ColumnInfos) do begin
       if not ColumnInfos[i].Reference then continue;
       Result += ' inner join ';
       Result += ColumnInfos[i].ReferenceTable;
-      Result += ' on ' + Name + '.' + ColumnInfos[i].Name + ' = ' + ColumnInfos[i].ReferenceTable + '.ID';
+      Result += ' on ' + Name + '.' + ColumnInfos[i].Name + ' = ' +
+           ColumnInfos[i].ReferenceTable + '.ID';
     end;
   end;
 
-  Result += ';';
+  //Result += ';';
 
   //ShowMessage (Result);
 end;
 
-procedure SetCaption(aTableForm: TTableForm);
+procedure SetCaption(aDBGrid: TDBGrid; aTable: TTableInfo);
 var
   i: integer;
 begin
-  with aTableForm do begin
-    for i := 0 to high (MTable.ColumnInfos) do begin
-      DBGrid.Columns[i].Width := MTable.ColumnInfos[i].Size;
-      DBGrid.Columns[i].Title.Caption := MTable.ColumnInfos[i].Caption;
-    end;
+  for i := 0 to high (aTable.ColumnInfos) do begin
+    aDBGrid.Columns[i].Width := aTable.ColumnInfos[i].Size;
+    aDBGrid.Columns[i].Title.Caption := aTable.ColumnInfos[i].Caption;
+    aDBGrid.Columns[i].ReadOnly := true;
   end;
 end;
 
