@@ -1,13 +1,14 @@
 object TableForm: TTableForm
-  Left = 905
-  Height = 449
-  Top = 223
-  Width = 406
+  Left = 347
+  Height = 394
+  Top = 303
+  Width = 408
+  BorderStyle = bsSingle
   Caption = 'TableForm'
-  ClientHeight = 449
-  ClientWidth = 406
+  ClientHeight = 394
+  ClientWidth = 408
   OnClose = FormClose
-  LCLVersion = '1.0.14.0'
+  LCLVersion = '1.2.2.0'
   object DBGrid: TDBGrid
     Left = 8
     Height = 316
@@ -49,50 +50,59 @@ object TableForm: TTableForm
     TabOrder = 3
   end
   object UpdateBitBtn: TBitBtn
-    Left = 712
+    Left = 680
     Height = 39
     Top = 24
-    Width = 42
+    Width = 74
     Caption = 'Обновить'
     OnClick = UpdateBitBtnClick
     TabOrder = 4
   end
   object DestroyBitBtn: TBitBtn
-    Left = 632
+    Left = 608
     Height = 39
     Top = 24
-    Width = 44
+    Width = 72
     Caption = 'Удалить'
     OnClick = DestroyBitBtnClick
     TabOrder = 5
   end
   object FiltersClose: TBitBtn
-    Left = 552
+    Left = 528
     Height = 39
     Top = 24
-    Width = 41
+    Width = 81
     Caption = 'Закрыть'
     OnClick = FiltersCloseClick
     TabOrder = 6
   end
   object ResetBitBtn: TBitBtn
-    Left = 776
+    Left = 752
     Height = 39
     Top = 24
-    Width = 32
+    Width = 56
     Caption = 'Сброс'
     OnClick = ResetBitBtnClick
     TabOrder = 7
   end
+  object InsertDBBitBtn: TBitBtn
+    Left = 152
+    Height = 39
+    Top = 24
+    Width = 65
+    Caption = 'Вставить'
+    OnClick = InsertDBBitBtnClick
+    TabOrder = 8
+  end
   object SQLQuery: TSQLQuery
     FieldDefs = <>
     Database = MainForm.IBConnection
-    Transaction = MainForm.SQLTransaction
+    Transaction = SQLTransaction
     Params = <>
     left = 120
     top = 400
   end
-  object Datasource: TDatasource
+  object Datasource: TDataSource
     DataSet = SQLQuery
     left = 64
     top = 400
@@ -107,6 +117,13 @@ object TableForm: TTableForm
     Interval = 1
     OnTimer = STimerTimer
     left = 167
+    top = 400
+  end
+  object SQLTransaction: TSQLTransaction
+    Active = False
+    Action = caNone
+    Database = MainForm.IBConnection
+    left = 216
     top = 400
   end
 end

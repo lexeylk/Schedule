@@ -1,0 +1,38 @@
+object EditForm: TEditForm
+  Left = 677
+  Height = 371
+  Top = 88
+  Width = 258
+  Caption = 'Редактирование'
+  ClientHeight = 371
+  ClientWidth = 258
+  OnClose = FormClose
+  LCLVersion = '1.0.14.0'
+  object OKBtn: TButton
+    Left = 8
+    Height = 35
+    Top = 320
+    Width = 79
+    Caption = 'ОК'
+    OnClick = OKBtnClick
+    TabOrder = 0
+  end
+  object ChanelBtn: TButton
+    Left = 88
+    Height = 35
+    Top = 320
+    Width = 79
+    Caption = 'Отмена'
+    OnClick = CancelBtnClick
+    TabOrder = 1
+  end
+  object DeleteBtn: TButton
+    Left = 168
+    Height = 35
+    Top = 320
+    Width = 80
+    Caption = 'Удалить'
+    OnClick = DeleteBtnClick
+    TabOrder = 2
+  end
+end

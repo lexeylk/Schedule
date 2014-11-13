@@ -15,15 +15,15 @@ type
   TCondition = record
     Caption: string;
     QueryFormat: string;
-    EditFormat: string;
+    ParamFormat: string;
   end;
 
-  { TConditions }
+  { TListOfCondition }
 
   TListOfCondition = class
     Conditions: array of TCondition;
     constructor Create ();
-    procedure AddCondition (aCaption, aQueryFormat, aEditFormat: string);
+    procedure AddCondition (aCaption, aQueryFormat: string);
   end;
 
   { TFilter }
@@ -40,7 +40,8 @@ type
     Query: string;
     Tag: integer;
     FTable: TTableInfo;
-    Param: string;
+    ParamName: string;
+    FieldType: TFieldType;
     constructor Create (aOwner: TWinControl; aTable: TTableInfo);
     destructor Destroy; override;
     procedure FilterInterfae (aOwner: TWinControl);
@@ -56,6 +57,7 @@ type
     procedure AddFilter (aOwner: TWinControl; aTable: TTableInfo);
     procedure DeleteFilter (aIndex: integer);
     function CreateFQuery: string;
+    function Count(): Integer;
   end;
 
 
@@ -68,22 +70,21 @@ var
 
 constructor TListOfCondition.Create;
 begin
-  AddCondition('>', ' %s.%s > :%s ', '%s');
-  AddCondition('<', ' %s.%s < :%s ', '%s');
-  AddCondition('>=', ' %s.%s >= :%s ', '%s');
-  AddCondition('<=', ' %s.%s <= :%s ', '%s');
-  AddCondition('=', ' %s.%s = :%s ', '%s');
-  AddCondition('начинается на', ' %s.%s like :%s ', '%s%%');
-  AddCondition('заканчивается на', ' %s.%s like :%s ', '%%%s');
-  AddCondition('содержит', ' %s.%s like :%s ', '%%%s%%');
+  AddCondition('>', ' %s.%s > ''%s'' ');
+  AddCondition('<', ' %s.%s < ''%s'' ');
+  AddCondition('>=', ' %s.%s >= ''%s'' ');
+  AddCondition('<=', ' %s.%s <= ''%s'' ');
+  AddCondition('=', ' %s.%s = ''%s'' ');
+  AddCondition('начинается на', ' %s.%s like ''%s%%'' ');
+  AddCondition('заканчивается на', ' %s.%s like ''%%%s'' ');
+  AddCondition('содержит', ' %s.%s like ''%%%s%%'' ');
 end;
 
-procedure TListOfCondition.AddCondition(aCaption, aQueryFormat, aEditFormat: string);
+procedure TListOfCondition.AddCondition(aCaption, aQueryFormat: string);
 begin
   SetLength (Conditions, length (Conditions) + 1);
   Conditions[high (Conditions)].Caption := aCaption;
   Conditions[high (Conditions)].QueryFormat := aQueryFormat;
-  Conditions[high (Conditions)].EditFormat := aEditFormat;
 end;
 
 { TListOfFilters }
@@ -107,7 +108,6 @@ begin
   SetLength (Filters, length (Filters) + 1);
   Filters[high (Filters)] := TFilter.Create (aOwner, aTable);
   Filters[high (Filters)].Tag := high (Filters);
-  Filters[high (Filters)].Param := 'p' + IntToStr(high (Filters));
 end;
 
 procedure TListOfFilters.DeleteFilter(aIndex: integer);
@@ -134,6 +134,11 @@ begin
     Result += ' and ';
   end;
   Result += Filters[high (Filters)].GetQuery;
+end;
+
+function TListOfFilters.Count: Integer;
+begin
+  Result := Length(Filters);
 end;
 
 { TFilter }
@@ -170,7 +175,8 @@ begin
     Top := 11; Left := 20;
     Height := 23; Width := 83;
     for i := 0 to high (FTable.ColumnInfos) do
-      Items.Add (FTable.ColumnInfos[i].Caption);
+       if (FTable.ColumnInfos[i].VisableColumn = true) then
+          Items.Add (FTable.ColumnInfos[i].Caption);
   end;
 
   FComBoCondition := TComboBox.Create (FPanel);
@@ -195,21 +201,20 @@ begin
     Top := 13; Left := 330;
     Height := 23; Width := 23;
   end;
-
 end;
 
 function TFilter.GetQuery: string;
 begin
-  if (not FTable.ColumnInfos[FComBoColumn.ItemIndex].Reference) then
+  if (not FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].Reference) then
      Result += Format(FCondition.Conditions[FComBoCondition.ItemIndex].QueryFormat,
-         [FTable.Name, FTable.ColumnInfos[FComBoColumn.ItemIndex].Name,
-         Param])
+         [FTable.Name, FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].Name,
+         FEdit.Caption])
      else
      Result += Format(FCondition.Conditions[FComBoCondition.ItemIndex].QueryFormat,
-         [FTable.ColumnInfos[FComBoColumn.ItemIndex].ReferenceTable,
-         FTable.ColumnInfos[FComBoColumn.ItemIndex].ReferenceColumn,
-         Param]);
-  ShowMessage (Result);
+         [FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].ReferenceTable,
+         FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].ReferenceColumn,
+         FEdit.Caption]);
+  //ShowMessage (Result);
 end;
 
 end.

@@ -1,12 +1,12 @@
 object MainForm: TMainForm
-  Left = 606
-  Height = 20
-  Top = 123
+  Left = 772
+  Height = 19
+  Top = 118
   Width = 250
   Caption = 'MainForm'
   Menu = MainMenu
   OnCreate = FormCreate
-  LCLVersion = '1.0.14.0'
+  LCLVersion = '1.2.2.0'
   object MainMenu: TMainMenu
     top = 208
     object MenuFile: TMenuItem
@@ -30,18 +30,11 @@ object MainForm: TMainForm
     DatabaseName = 'C:\SCHEDULE.FDB'
     KeepConnection = False
     Password = 'masterkey'
-    Transaction = SQLTransaction
+    Transaction = TableForm.SQLTransaction
     UserName = 'sysdba'
     CharSet = 'UTF-8'
     LogEvents = []
     left = 38
-    top = 196
-  end
-  object SQLTransaction: TSQLTransaction
-    Active = False
-    Action = caNone
-    Database = IBConnection
-    left = 86
     top = 196
   end
 end

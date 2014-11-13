@@ -20,6 +20,7 @@ type
     Size: integer;
     FieldType: TFieldType;
     Reference: boolean;
+    VisableColumn: Boolean;
     ReferenceColumn: string;
     ReferenceTable: string;
   end;
@@ -30,11 +31,12 @@ type
     ColumnInfos: array of TColumnInfo;
     Name: string;
     Caption: string;
+    GenerateName: string;
     constructor Create (aCaption, aName: string);
     function AddColumn (aCaption, aName: string;
-             aFieldType: TFieldType; aSize: integer;
-             aReference: boolean;
-             aReferenceColumn, aReferenceTable: string): TTableInfo;
+      aFieldType: TFieldType; aSize: integer;
+      aReference: boolean; aVisible: Boolean;
+      aReferenceColumn, aReferenceTable: string): TTableInfo;
   end;
 
   { TListOfTable }
@@ -46,7 +48,24 @@ type
     function GetTableCaption (): Strings;
   end;
 
+  function GetTableByName(aName: String): TTableInfo;
+
+var
+  ListOfTable: TListOfTable;
+
 implementation
+
+function GetTableByName(aName: String): TTableInfo;
+var
+  i:  Integer;
+begin
+  with ListOfTable do
+       for i := 0 to High(TableInfos) do
+           if LowerCase(aName) = LowerCase(TableInfos[i].Name) then
+              Exit(TableInfos[i]);
+
+  Result := nil;
+end;
 
 { TListOfTable }
 
@@ -54,35 +73,55 @@ constructor TListOfTable.Create();
 begin
 
   AddTable ('Преподаватели', 'Professors').
+           AddColumn ('ID', 'ID', ftInteger, 10,
+                     false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
            AddColumn ('Преподаватель', 'Name', ftString, 110,
-                     false, NOT_STRING_VALUE, NOT_STRING_VALUE);
+                     false, true, NOT_STRING_VALUE, NOT_STRING_VALUE);
   AddTable ('Предметы', 'Subjects').
+           AddColumn ('ID', 'ID', ftInteger, 10,
+                     false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
            AddColumn ('Предмет', 'Name', ftString, 385,
-                     false, NOT_STRING_VALUE, NOT_STRING_VALUE);
+                     false, true, NOT_STRING_VALUE, NOT_STRING_VALUE);
   AddTable ('Кабинеты', 'Rooms').
+           AddColumn ('ID', 'ID', ftInteger, 10,
+                     false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
            AddColumn ('Кабинет', 'Name', ftString, 100,
-                     false, NOT_STRING_VALUE, NOT_STRING_VALUE).
+                     false, true, NOT_STRING_VALUE, NOT_STRING_VALUE).
            AddColumn ('Вместимость', 'Room_size', ftInteger, 80,
-                     false, NOT_STRING_VALUE, NOT_STRING_VALUE);
+                     false, true, NOT_STRING_VALUE, NOT_STRING_VALUE);
   AddTable ('Группы', 'Groups').
+           AddColumn ('ID', 'ID', ftInteger, 10,
+                     false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
            AddColumn ('Группа', 'Name', ftString, 70,
-                     false, NOT_STRING_VALUE, NOT_STRING_VALUE).
+                     false, true, NOT_STRING_VALUE, NOT_STRING_VALUE).
            AddColumn ('Количество человек', 'Group_size', ftInteger, 30,
-                     false, NOT_STRING_VALUE, NOT_STRING_VALUE);
+                     false, true, NOT_STRING_VALUE, NOT_STRING_VALUE);
+  AddTable ('Дни недели', 'Days').
+           AddColumn('ID', 'ID', ftInteger, 10,
+                     false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
+           AddColumn('Название', 'Name', ftString, 100,
+                     false, true, NOT_STRING_VALUE, NOT_STRING_VALUE);
+  AddTable ('Типы занятий', 'Subject_Types').
+           AddColumn('ID', 'ID', ftInteger, 10,
+                     false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
+           AddColumn('Название', 'Name', ftString, 30,
+                     false, true, NOT_STRING_VALUE, NOT_STRING_VALUE);
 
   AddTable ('Расписание', 'Schedule_items').
+           AddColumn ('ID', 'ID', ftInteger, 10,
+                     false, false, NOT_STRING_VALUE, NOT_STRING_VALUE).
            AddColumn ('Преподаватель', 'Professor_id', ftString, 110,
-                     true, 'Name', 'Professors').
+                     true, true, 'Name', 'Professors').
            AddColumn ('Предмет', 'Subject_id', ftString, 385,
-                     true, 'Name', 'Subjects').
+                     true, true, 'Name', 'Subjects').
            AddColumn ('Тип', 'Subject_type_id', ftString, 30,
-                     true, 'Name', 'Subject_types').
+                     true, true, 'Name', 'Subject_types').
            AddColumn ('Кабинет', 'Room_id', ftString, 55,
-                     true, 'Name', 'Rooms').
+                     true, true, 'Name', 'Rooms').
            AddColumn ('Группа', 'Group_id', ftString, 70,
-                     true, 'Name', 'Groups').
+                     true, true, 'Name', 'Groups').
            AddColumn ('День недели', 'Day_id', ftDate, 90,
-                     true, 'Name', 'Days');
+                     true, true, 'Name', 'Days');
 
 end;
 
@@ -108,16 +147,18 @@ constructor TTableInfo.Create(aCaption, aName: string);
 begin
   Caption := aCaption;
   Name := aName;
+  GenerateName := Name + '_GEN';
 end;
 
 function TTableInfo.AddColumn(aCaption, aName: string; aFieldType: TFieldType;
-  aSize: integer;
-  aReference: boolean; aReferenceColumn, aReferenceTable: string): TTableInfo;
+  aSize: integer; aReference: boolean; aVisible: Boolean; aReferenceColumn,
+  aReferenceTable: string): TTableInfo;
 begin
   SetLength (ColumnInfos, length (ColumnInfos) + 1);
   with ColumnInfos[high (ColumnInfos)] do begin
     Name := aName; Caption := aCaption;
     Reference := aReference;
+    VisableColumn := aVisible;
 
     if (Reference) then begin
       ReferenceTable := aReferenceTable;
@@ -129,6 +170,10 @@ begin
 
   Result := Self;
 end;
+
+initialization
+
+ListOfTable := TListOfTable.Create();
 
 end.
 

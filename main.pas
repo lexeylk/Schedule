@@ -19,7 +19,6 @@ type
     CaptionExit: TMenuItem;
     MenuAbout: TMenuItem;
     MenuTable: TMenuItem;
-    SQLTransaction: TSQLTransaction;
     procedure CaptionExitClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure MenuAboutClick(Sender: TObject);
@@ -32,7 +31,6 @@ type
 
 var
   MainForm: TMainForm;
-  ListOfTable: TListOfTable;
 
 implementation
 
@@ -52,8 +50,6 @@ var
   Names: Strings;
 begin
   IBConnection.Connected := true;
-
-  ListOfTable := TListOfTable.Create ();
 
   Names := ListOfTable.GetTableCaption ();
   for i := 0 to high (Names) do begin
@@ -82,7 +78,7 @@ begin
   NewForm.MTable := ListOfTable.TableInfos[index];
   NewForm.Show;
   with NewForm do
-    ShowTable (SQLQuery, DBGrid, MTable);
+       ShowTable (SQLQuery, DBGrid, MTable);
 end;
 
 end.

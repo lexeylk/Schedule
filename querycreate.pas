@@ -6,17 +6,20 @@ interface
 
 uses
   Classes, SysUtils, sqldb, FileUtil, Forms, Controls, DBGrids, Graphics,
-  Dialogs, metadata;
+  Dialogs, metadata, ufilter;
 
 procedure ShowTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid; aTable: TTableInfo);
 procedure ShowFilterTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
-                          aTable: TTableInfo; aFQuery: string);
+  aTable: TTableInfo; aFQuery: string);
 procedure ShowSortTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
-                          aTable: TTableInfo; aFQuery: string; aIndex: integer;
-                          aOrder: Boolean);
+  aTable: TTableInfo; aFQuery: string; aIndex: integer;aOrder: Boolean);
+procedure ShowUpdateTable(aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
+  aTable: TTableInfo; aUQuery: string);
 procedure SetQuery (aSQLQuery: TSQLQuery; aQuery: string);
+procedure SetUpdateQuery (aSQLQuery: TSQLQuery; aQuery: string);
 function CreateQuery (aTable: TTableInfo): string;
 procedure SetCaption (aDBGrid: TDBGrid; aTable: TTableInfo);
+function ConditionQuery (aTable: TTableInfo; aID: integer): string;
 
 implementation
 
@@ -26,8 +29,8 @@ begin
   SetCaption (aDBGrid, aTable);
 end;
 
-procedure ShowFilterTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
-                          aTable: TTableInfo; aFQuery: string);
+procedure ShowFilterTable(aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
+  aTable: TTableInfo; aFQuery: string);
 begin
   SetQuery (aSQLQuery, CreateQuery (aTable) + aFQuery);
   SetCaption (aDBGrid, aTable);
@@ -46,14 +49,30 @@ begin
   SetCaption (aDBGrid, aTable);
 end;
 
+procedure ShowUpdateTable(aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
+  aTable: TTableInfo; aUQuery: string);
+begin
+  SetUpdateQuery (aSQLQuery, aUQuery);
+  //SetCaption (aDBGrid, aTable);
+end;
+
 procedure SetQuery(aSQLQuery: TSQLQuery; aQuery: string);
 begin
   //ShowMessage (aQuery);
   with aSQLQuery do begin
     Close;
-    Params.Clear;
     SQL.Text := aQuery;
     Open;
+  end;
+end;
+
+procedure SetUpdateQuery(aSQLQuery: TSQLQuery; aQuery: string);
+begin
+  with aSQLQuery do begin
+    Close;
+    Params.Clear;
+    SQL.Text := aQuery;
+    ExecSQL;
   end;
 end;
 
@@ -97,7 +116,15 @@ begin
     aDBGrid.Columns[i].Width := aTable.ColumnInfos[i].Size;
     aDBGrid.Columns[i].Title.Caption := aTable.ColumnInfos[i].Caption;
     aDBGrid.Columns[i].ReadOnly := true;
+    if (aTable.ColumnInfos[i].VisableColumn = false) then
+       aDBGrid.Columns[i].Visible := false;
   end;
+end;
+
+function ConditionQuery(aTable: TTableInfo; aID: integer): string;
+begin
+  Result += ' Where ';
+  Result += aTable.Name + '.' + aTable.ColumnInfos[0].Name + ' = ' + IntToStr (aID);
 end;
 
 end.

@@ -15,9 +15,11 @@ type
 
   TTableForm = class(TForm)
     AddFilterBitBtn: TBitBtn;
+    InsertDBBitBtn: TBitBtn;
     ResetBitBtn: TBitBtn;
     FiltersClose: TBitBtn;
     DestroyBitBtn: TBitBtn;
+    SQLTransaction: TSQLTransaction;
     UpdateBitBtn: TBitBtn;
     FilterBitBtn: TBitBtn;
     Datasource: TDatasource;
@@ -29,6 +31,7 @@ type
     procedure AddFilterBitBtnClick(Sender: TObject);
     procedure DBGridDblClick(Sender: TObject);
     procedure DBGridTitleClick(Column: TColumn);
+    procedure InsertDBBitBtnClick(Sender: TObject);
     procedure DestroyBitBtnClick(Sender: TObject);
     procedure FilterBitBtnClick(Sender: TObject);
     procedure FiltersCloseClick(Sender: TObject);
@@ -63,6 +66,7 @@ procedure TTableForm.ResetBitBtnClick(Sender: TObject);
 begin
   if (length (ListOfFilters.Filters) <> 0) then ListOfFilters.Destroy;
   ShowTable (SQLQuery, DBGrid, MTable);
+  ListOfFilters := TListOfFilters.Create;
 end;
 
 procedure TTableForm.STimerTimer(Sender: TObject);
@@ -104,19 +108,29 @@ procedure TTableForm.DBGridDblClick(Sender: TObject);
 var
   NewForm: TEditForm;
 begin
-  //NewForm := TEditForm.Create (TableForm);
-  //NewForm.Show;
+  NewForm := TEditForm.Create (TableForm, MTable, SQLQuery, DBGrid, SQLTransaction, false);
+  NewForm.Show;
 end;
 
 procedure TTableForm.DBGridTitleClick(Column: TColumn);
+var
+  Query: String;
 begin
-//  Order := not Order;
-//  if (length (ListOfFilters.Filters) <> 0) then
-//    ShowSortTable (SQLQuery, DBGrid, MTable, ListOfFilters.CreateFQuery,
-//                Column.Index, Order)
-//  else
-//    ShowSortTable (SQLQuery, DBGrid, MTable, '',
-//                Column.Index, Order);
+  Order := not Order;
+  Query := '';
+  if (ListOfFilters.Count() <> 0) then
+    Query := ListOfFilters.CreateFQuery;
+
+  ShowSortTable (SQLQuery, DBGrid, MTable, Query,
+             Column.Index, Order);
+end;
+
+procedure TTableForm.InsertDBBitBtnClick(Sender: TObject);
+var
+  NewForm: TEditForm;
+begin
+  NewForm := TEditForm.Create (TableForm, MTable, SQLQuery, DBGrid, SQLTransaction, true);
+  NewForm.Show;
 end;
 
 procedure TTableForm.DestroyBitBtnClick(Sender: TObject);
@@ -149,7 +163,8 @@ begin
   STimer.Enabled := true;
   AddFilterBitBtn.Enabled := true;
   if (length (ListOfFilters.Filters) <> 0) then ListOfFilters.Destroy;
-  //ShowTable (SQLQuery, DBGrid, MTable);
+  Datasource.DataSet.Active := true;
+  ShowTable (SQLQuery, DBGrid, MTable);
 end;
 
 procedure TTableForm.FormClose(Sender: TObject; var CloseAction: TCloseAction);
