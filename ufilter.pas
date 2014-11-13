@@ -124,7 +124,7 @@ var
   i: Integer;
 begin
   if Count() <> 0 then begin
-     for i := high (Filters) to 0 do begin
+     for i := high (Filters) downto 0 do begin
        FreeAndNil (Filters[i]);
        SetLength (Filters, length (Filters) - 1);
      end;

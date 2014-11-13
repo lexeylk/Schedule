@@ -6,9 +6,15 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Grids,
-  StdCtrls, Buttons, metadata, sqldb, DB, querycreate;
+  StdCtrls, Buttons, CheckLst, ExtCtrls, metadata, sqldb, DB, querycreate,
+  ufilter;
 
 type
+
+  TCurrColRow = record
+    aCol: integer;
+    aRow: integer;
+  end;
 
   TColumnRowName = record
     ID: integer;
@@ -21,37 +27,45 @@ type
 
   TScheduleForm = class(TForm)
     AddFilterBtn: TBitBtn;
+    CheckGroup: TCheckGroup;
     DeleteBtn: TBitBtn;
+    Label1: TLabel;
+    Label2: TLabel;
     ResetBtn: TBitBtn;
     RefreshButton: TButton;
     DataSource: TDataSource;
-    Label1: TLabel;
-    Label2: TLabel;
     LabelX: TLabel;
     LabelY: TLabel;
-    ScrollBox1: TScrollBox;
+    FilterScrollBox: TScrollBox;
     SQLQuery: TSQLQuery;
     XFieldCmbBox: TComboBox;
     YFieldCmbBox: TComboBox;
     Grid: TDrawGrid;
     procedure AddFilterBtnClick(Sender: TObject);
+    procedure CheckGroupItemClick(Sender: TObject; Index: integer);
+    procedure DeleteBtnClick(Sender: TObject);
     procedure GridDblClick(Sender: TObject);
     procedure GridDrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
     procedure FormCreate(Sender: TObject);
     procedure RefreshButtonClick(Sender: TObject);
+    procedure ResetBtnClick(Sender: TObject);
   private
     XTitles: array of TColumnRowName;
     YTitles: array of TColumnRowName;
     Items: array of array of array of array of string;
     FCols: array of TColumnInfo;
+    FFlag: Boolean;
+    CurrentHeight: integer;
+    VisibleColumn: array of Boolean;
+    CurrColRow: TCurrColRow;
     function CreateScheduleQuery: string;
-    procedure FillItems();
+    procedure FillItems;
     procedure FillRowTitles;
     procedure FillColumnTitles;
-    procedure FillCmbBoxes();
-    procedure SetColsRows();
-    procedure Refresh();
+    procedure FillCmbBoxes;
+    procedure SetColsRows;
+    procedure Refresh;
     function GetLookUpResult(aTable: TTableInfo): TColumnRowNames;
   public
     { public declarations }
@@ -60,22 +74,7 @@ type
 var
   ScheduleForm: TScheduleForm;
   ScheduleTable: TTableInfo;
-
-const
-  ScheduleQuery = 'select schedule_items.id as schedule_itemsid, schedule_items.subject_id'
-    + ' as schedule_itemssubject_id, schedule_items.subject_type_id as schedule_itemssubject_type_id,'
-    + ' schedule_items.professor_id as schedule_itemsprofessor_id, schedule_items.time_id as schedule_itemstime_id,'
-    + ' schedule_items.day_id as schedule_itemsday_id, schedule_items.week_id as schedule_itemsweek_id,'
-    + ' schedule_items.group_id as schedule_itemsgroup_id, schedule_items.room_id as schedule_itemsroom_id,'
-    + ' subjects.name as subjectsname, subject_types.name as subject_typesname, professors.name as professorsname,'
-    + ' times.begin_end_time as timesbegin_end_time, days.name as daysname,' +
-    ' weeks.name as weeksname, groups.name as groupsname, rooms.name as roomsname from schedule_items' +
-    ' inner join subjects on schedule_items.subject_id = subjects.id  inner join subject_types'
-    + ' on schedule_items.subject_type_id = subject_types.id  inner join professors on schedule_items.professor_id'
-    + ' = professors.id  inner join times on schedule_items.time_id = times.id  inner join days on'
-    + ' schedule_items.day_id = days.id  inner join weeks on schedule_items.week_id = weeks.id'
-    + ' inner join groups on schedule_items.group_id = groups.id  inner join rooms on' +
-    ' schedule_items.room_id = rooms.id  ';
+  ListOfFilters: TListOfFilters;
 
 implementation
 
@@ -87,20 +86,36 @@ procedure TScheduleForm.FormCreate(Sender: TObject);
 var
   i: Integer;
 begin
-  for i := 0 to High(ScheduleTable.ColumnInfos) do
+  for i := 0 to high(ScheduleTable.ColumnInfos) do
     if (ScheduleTable.ColumnInfos[i].VisableColumn) then begin
-      SetLength(FCols, Length(FCols) + 1);
-      FCols[High(FCols)] := ScheduleTable.ColumnInfos[i];
+      SetLength(FCols, length(FCols) + 1);
+      FCols[high(FCols)] := ScheduleTable.ColumnInfos[i];
     end;
-  FillCmbBoxes();
+
+  FillCmbBoxes;
+  for i := 0 to high (FCols) do begin
+    SetLength(VisibleColumn, length (VisibleColumn) + 1);
+    VisibleColumn[high (VisibleColumn)] := true;
+    CheckGroup.Items.AddStrings (FCols[i].Caption);
+    CheckGroup.Checked[i] := true;
+  end;
+
+  FFlag := False;
+  ListOfFilters := TListOfFilters.Create;
   XFieldCmbBox.ItemIndex := 4;
   YFieldCmbBox.ItemIndex := 5;
-  Refresh();
+  Refresh;
 end;
 
 procedure TScheduleForm.RefreshButtonClick(Sender: TObject);
 begin
-  Refresh();
+  Refresh;
+end;
+
+procedure TScheduleForm.ResetBtnClick(Sender: TObject);
+begin
+  ListOfFilters.Clear();
+  Refresh;
 end;
 
 procedure TScheduleForm.Refresh;
@@ -121,7 +136,6 @@ var
   i, j: Integer;
   CurrHeight: Integer;
 begin
-
   CurrHeight := 0;
   if (aRow = 0) and (aCol = 0) then
     Exit;
@@ -129,29 +143,71 @@ begin
   with Grid.Canvas do begin
     Pen.Color := clBlack;
     if aCol = 0 then
-      TextOut(aRect.Left, aRect.Top, YTitles[aRow-1].Caption)
-    else if aRow = 0 then
-      TextOut(aRect.Left, aRect.Top, XTitles[aCol-1].Caption)
-    else if ((aRow-1) <= High(Items)) and ((aCol-1) <= High(Items[aRow-1])) then
-      for i := 0 to High(Items[aRow-1][aCol-1]) do begin
-        for j := 0 to High(Items[aRow-1][aCol-1][i]) do begin
-          TextOut(aRect.Left + LeftSpace, aRect.Top + CurrHeight, FCols[j].Caption + ': ' + Items[aRow-1][aCol-1][i][j]);
-          CurrHeight += ElemHeight;
+      TextOut (aRect.Left, aRect.Top, YTitles[aRow - 1].Caption)
+    else
+      if aRow = 0 then
+        TextOut (aRect.Left, aRect.Top, XTitles[aCol - 1].Caption)
+    else
+      if (((aRow - 1) <= high (Items)) and ((aCol - 1) <= high (Items[aRow - 1]))) then
+        for i := 0 to high (Items[aRow - 1][aCol - 1]) do begin
+          for j := 0 to high (Items[aRow - 1][aCol - 1][i]) do begin
+            if (VisibleColumn[j]) then begin
+              TextOut (aRect.Left + LeftSpace, aRect.Top + CurrHeight, FCols[j].Caption + ': ' + Items[aRow - 1][aCol - 1][i][j]);
+              CurrHeight += ElemHeight;
+            end;
+          end;
+          Line (aRect.Left, aRect.Top + CurrHeight, aRect.Right, aRect.Top + CurrHeight);
+          CurrHeight += 5;
+          CurrentHeight := CurrHeight;
         end;
-        Line(aRect.Left, aRect.Top + CurrHeight, aRect.Right, aRect.Top + CurrHeight);
-        CurrHeight += 5;
-      end;
   end;
 end;
 
 procedure TScheduleForm.GridDblClick(Sender: TObject);
 begin
-
+  with Grid do begin
+    if ((CurrColRow.aCol = Col) and (CurrColRow.aRow = Row)) then begin
+      RowHeights[Row] := 160;
+      CurrColRow.aCol := 0;
+      CurrColRow.aRow := 0;
+    end
+    else begin
+      RowHeights[Row] := 165 * length (Items[Row - 1][Col - 1]);
+      CurrColRow.aCol := Col;
+      CurrColRow.aRow := Row;
+    end;
+  end;
 end;
 
 procedure TScheduleForm.AddFilterBtnClick(Sender: TObject);
 begin
+  ListOfFilters.AddFilter (FilterScrollBox, ScheduleTable);
+end;
 
+procedure TScheduleForm.CheckGroupItemClick(Sender: TObject; Index: integer);
+begin
+  VisibleColumn[Index] := TCheckGroup (Sender).Checked[Index];
+  Grid.Invalidate;
+end;
+
+procedure TScheduleForm.DeleteBtnClick(Sender: TObject);
+var
+  i: integer;
+  flag: Boolean;
+begin
+  flag := false;
+  while (not flag) do begin
+
+    flag := true;
+    for i := 0 to high (ListOfFilters.Filters) do begin
+      if (ListOfFilters.Filters[i].FDestroyCheckBox.Checked) then begin
+        ListOfFilters.DeleteFilter (i);
+        flag := false;
+        break;
+      end;
+    end;
+
+  end;
 end;
 
 function TScheduleForm.CreateScheduleQuery: string;
@@ -160,27 +216,41 @@ var
   i, j: integer;
 begin
   Result := '';
-  {
-  for i := 0 to high(FCols) do
-  begin
-    if (FCols[i].Reference) then
-    begin
-      Table := GetTableByName(FCols[i].ReferenceTable);
-      for j := 0 to (high(FCols)) do
-      begin
-        SetLength(FCols, length(FCols) + 1);
-        FCols[high(FCols)] := FCols[j];
+
+  Result += 'Select';
+
+  with (ScheduleTable) do begin
+    for i := 0 to high (ColumnInfos) do
+      Result += Format (' %s.%s as %s,', [Name, ColumnInfos[i].Name, ColumnInfos[i].AliasName]);
+
+    for i := 0 to high (ColumnInfos) do begin
+      if (ColumnInfos[i].Reference) then begin
+        Table := GetTableByName (ColumnInfos[i].ReferenceTable);
+        with (Table) do begin
+          for j := 0 to high (ColumnInfos) do begin
+            if (ColumnInfos[j].VisableColumn) then begin
+              if (i <> high (ScheduleTable.ColumnInfos)) then
+                Result += Format (' %s.%s as %s,', [Name, ColumnInfos[j].Name,
+                  ColumnInfos[j].AliasName])
+              else
+                Result += Format (' %s.%s as %s', [Name, ColumnInfos[j].Name,
+                  ColumnInfos[j].AliasName]);
+            end;
+          end;
+        end;
       end;
     end;
+
+    Result += Format (' from %s ', [ScheduleTable.Name]);
+
+    for i := 0 to high (ColumnInfos) do begin
+      with (ColumnInfos[i]) do
+        if (VisableColumn) then
+          Result += Format ('inner join %s on %s.%s = %s.ID ',
+            [ReferenceTable, ScheduleTable.Name, Name, ReferenceTable]);
+    end;
+
   end;
-
-  Result += Format('Select %s', [ScheduleTable.Name]);
-
-  for i := 0 to high(FColumns) do
-  begin
-
-  end; }
-
 end;
 
 procedure TScheduleForm.FillItems;
@@ -191,6 +261,8 @@ var
   XLen, YLen: integer;
   RefTbl: TTableInfo;
   Query: string;
+  Param: array of string;
+  flag: Boolean;
 begin
     Items := nil;
 
@@ -201,13 +273,49 @@ begin
     XIDCol := FCols[XFieldCmbBox.ItemIndex];
     YIDCol := FCols[YFieldCmbBox.ItemIndex];
 
-    Query := ScheduleQuery + 'order by ' +
+    Query += CreateScheduleQuery;
+
+    if (FFlag) then begin
+      with ListOfFilters do begin
+       if (Count() <> 0) then begin
+           for i := 0 to high (Filters) do begin
+             flag := true;
+             if ((Filters[i].FComBoColumn.Caption = '') or
+             (Filters[i].FComBoCondition.Caption = '') or
+             (Filters[i].FEdit.Caption = '')) then begin
+               ShowMessage ('Заполните все поля');
+               flag := false;
+               break;
+             end;
+           end;
+         if (flag) then begin
+           for i := 0 to high (Filters) do begin
+             with (Filters[i]) do begin
+               SetLength (Param, length (Param) + 1);
+               Param[i] := Format (FCondition.Conditions[FComBoCondition.ItemIndex].ParamFormat,
+               [FEdit.Caption]);
+             end;
+           end;
+           Query += CreateFQuery;
+         end;
+       end
+       else
+         ShowMessage ('Добавьте фильтры');
+      end;
+
+    end;
+
+    Query += ' order by ' +
       FCols[YFieldCmbBox.ItemIndex].ReferenceTable + '.ID' +
       ', ' + FCols[XFieldCmbBox.ItemIndex].ReferenceTable + '.ID' + ', Times.ID';
 
+
     //ShowMessage(Query);
 
-    SetQuery(SQLQuery, Query);
+    if (ListOfFilters.Count() = 0) then
+      SetQuery(SQLQuery, Query)
+    else
+      SetParamQuery(SQLQuery, Query, Param);
 
     XFieldID := SQLQuery.FieldByName(XIDCol.AliasName).Index;
     YFieldID := SQLQuery.FieldByName(YIDCol.AliasName).Index;
@@ -238,7 +346,7 @@ begin
         SetLength(Items[i][j], length(Items[i][j]) + 1);
         SetLength(Items[i][j][high(Items[i][j])], ColumnLen);
 
-        for k := 0 to High(FCols) do
+        for k := 0 to high(FCols) do
         begin
           //ShowMessage (ColumnInfos[k].AliasName);
           Items[i][j][high(Items[i][j])][k] :=
@@ -252,6 +360,7 @@ begin
 
     end;
 
+    FFlag := true;
 end;
 
 procedure TScheduleForm.FillRowTitles;
@@ -278,7 +387,7 @@ var
 begin
   XFieldCmbBox.Items.Clear;
   YFieldCmbBox.Items.Clear;
-  for i := 0 to High(FCols) do
+  for i := 0 to high(FCols) do
    // if ColumnInfos[i].VisableColumn then
     begin
       XFieldCmbBox.Items.Add(FCols[i].Caption);
@@ -301,11 +410,10 @@ begin
 
   SetQuery(LookUpQuery, CreateQuery(aTable));
 
-  while (not LookUpQuery.EOF) do
-  begin
-    SetLength(Result, Length(Result) + 1);
-    Result[High(Result)].ID := LookUpQuery.Fields[0].AsInteger;
-    Result[High(Result)].Caption := LookUpQuery.Fields[1].AsString;
+  while (not LookUpQuery.EOF) do begin
+    SetLength(Result, length(Result) + 1);
+    Result[high(Result)].ID := LookUpQuery.Fields[0].AsInteger;
+    Result[high(Result)].Caption := LookUpQuery.Fields[1].AsString;
     LookUpQuery.Next;
   end;
 
@@ -314,21 +422,16 @@ begin
 end;
 
 procedure TScheduleForm.SetColsRows;
-const
-  RowHeight = 140;
-  ColWidth = 300;
-  ColHeaderWidth = 80;
-  RowHeaderHeight = 30;
 begin
   with Grid do begin
-    DefaultColWidth := ColWidth;
-    DefaultRowHeight := RowHeight;
-    RowCount := Length(YTitles) + 1;
-    ColCount := Length(XTitles) + 1;
-    ColWidths[0] := ColHeaderWidth;
-    RowHeights[0] := RowHeaderHeight;
+    DefaultColWidth := 300;
+    DefaultRowHeight := 160;
+    RowCount := length(YTitles) + 1;
+    ColCount := length(XTitles) + 1;
+    ColWidths[0] := 80;
+    RowHeights[0] := 30;
   end;
-
+  CurrentHeight := 160;
 end;
 
 initialization

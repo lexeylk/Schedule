@@ -1,19 +1,20 @@
 object TableForm: TTableForm
-  Left = 598
-  Height = 400
-  Top = 261
-  Width = 408
+  Left = 903
+  Height = 449
+  Top = 553
+  Width = 405
   BorderStyle = bsSingle
   Caption = 'TableForm'
-  ClientHeight = 400
-  ClientWidth = 408
+  ClientHeight = 449
+  ClientWidth = 405
   OnClose = FormClose
   LCLVersion = '1.0.14.0'
   object DBGrid: TDBGrid
     Left = 8
-    Height = 316
+    Height = 365
     Top = 72
-    Width = 392
+    Width = 389
+    BorderStyle = bsNone
     Color = clWindow
     Columns = <>
     DataSource = Datasource

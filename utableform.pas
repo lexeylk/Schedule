@@ -101,10 +101,10 @@ begin
           end;
         end;
         ShowFilterTable (SQLQuery, DBGrid, MTable, CreateFQuery, Param);
-      end
-      else
+      end;
+    end
+    else
         ShowMessage ('Добавьте фильтры');
-    end;
   end;
 end;
 
