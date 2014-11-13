@@ -4,8 +4,8 @@ object ScheduleForm: TScheduleForm
   Top = 107
   Width = 1370
   Caption = 'ScheduleForm'
-  ClientHeight = 750
-  ClientWidth = 1370
+  ClientHeight = 0
+  ClientWidth = 0
   OnCreate = FormCreate
   LCLVersion = '1.0.14.0'
   object Grid: TDrawGrid
@@ -17,8 +17,11 @@ object ScheduleForm: TScheduleForm
     ExtendedSelect = False
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSizing, goColSizing, goSmoothScroll]
     TabOrder = 0
+    OnClick = GridClick
     OnDblClick = GridDblClick
     OnDrawCell = GridDrawCell
+    OnMouseDown = GridMouseDown
+    OnMouseMove = GridMouseMove
   end
   object XFieldCmbBox: TComboBox
     Left = 72
@@ -129,5 +132,12 @@ object ScheduleForm: TScheduleForm
   object DataSource: TDatasource
     left = 472
     top = 8
+  end
+  object SQLTransaction: TSQLTransaction
+    Active = False
+    Action = caNone
+    Database = MainForm.IBConnection
+    left = 488
+    top = 84
   end
 end

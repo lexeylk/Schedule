@@ -6,9 +6,10 @@ interface
 
 uses
   Classes, SysUtils, sqldb, FileUtil, Forms, Controls, DBGrids, Graphics,
-  Dialogs, metadata, ufilter;
+  Dialogs, metadata, ufilter, Grids;
 
 procedure ShowTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid; aTable: TTableInfo);
+procedure ShowSchedule (aGrid: TDrawGrid);
 procedure ShowFilterTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
   aTable: TTableInfo; aFQuery: string; aParam: array of string);
 procedure ShowSortTable (aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;
@@ -28,6 +29,11 @@ procedure ShowTable(aSQLQuery: TSQLQuery; aDBGrid: TDBGrid; aTable: TTableInfo);
 begin
   SetQuery (aSQLQuery, CreateQuery (aTable));
   SetCaption (aDBGrid, aTable);
+end;
+
+procedure ShowSchedule(aGrid: TDrawGrid);
+begin
+  aGrid.Invalidate;
 end;
 
 procedure ShowFilterTable(aSQLQuery: TSQLQuery; aDBGrid: TDBGrid;

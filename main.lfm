@@ -1,11 +1,11 @@
 object MainForm: TMainForm
-  Left = 980
-  Height = 95
-  Top = 418
+  Left = 677
+  Height = 94
+  Top = 221
   Width = 356
   BorderStyle = bsSingle
   Caption = 'MainForm'
-  ClientHeight = 75
+  ClientHeight = 74
   ClientWidth = 356
   Menu = MainMenu
   OnCreate = FormCreate

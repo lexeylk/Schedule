@@ -1,7 +1,7 @@
 object TableForm: TTableForm
-  Left = 903
+  Left = 519
   Height = 449
-  Top = 553
+  Top = 142
   Width = 405
   BorderStyle = bsSingle
   Caption = 'TableForm'

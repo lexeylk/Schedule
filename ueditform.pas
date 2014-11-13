@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, sqldb, db, FileUtil, DBGrids, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, DbCtrls, metadata, querycreate;
+  StdCtrls, ExtCtrls, DbCtrls, metadata, querycreate, Grids;
 
 type
 
@@ -22,6 +22,7 @@ type
     EColumn: TColumnInfo;
     EDBSQLQuery: TSQLQuery;
     ColumnIndex: integer;
+    IsReference: Boolean;
   private
     IsInsert: Boolean;
     procedure CreateInrterface (aOwner: TWinControl; aReference: Boolean);
@@ -39,6 +40,7 @@ type
     ChanelBtn: TButton;
     OKBtn: TButton;
     CancelBtn: TButton;
+    MGrid: TDrawGrid;
     procedure CancelBtnClick(Sender: TObject);
     procedure DeleteBtnClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -53,9 +55,13 @@ type
     MSQLQuery: TSQLQuery;
     MDBGrid: TDBGrid;
     IsInsert: Boolean;
+    IsSchedule: Boolean;
     MTransaction: TSQLTransaction;
     constructor Create(TheOwner: TComponent; aTable: TTableInfo;
       aSQLQuery: TSQLQuery; aDBGrid: TDBGrid; aTransaction: TSQLTransaction;
+      aIsInsert: Boolean);
+    constructor Create (TheOwner: TComponent; aTable: TTableInfo;
+      aTransaction: TSQLTransaction; aID: integer; aSQLQuery: TSQLQuery;
       aIsInsert: Boolean);
     procedure AddEditor(aColumn: TColumnInfo; aOwner: TWinControl;
       aCaption: string; aReference: Boolean; aSQLQuery: TSQLQuery;
@@ -83,6 +89,7 @@ begin
   EColumn := aColumn;
   ColumnIndex := aIndex;
   IsInsert := aIsInsert;
+  IsReference := aReference;
   if (not IsInsert) then CurrentCaption := aCaption else CurrentCaption := '';
   CreateInrterface (aOwner, aReference);
 end;
@@ -111,13 +118,6 @@ begin
      DataSrc := TDataSource.Create (nil);
 
      LookUpQuery.DataSource := DataSrc;
-
-     LookUpQuery.DataBase := EDBSQLQuery.DataBase;
-     LookUpQuery.Transaction := EDBSQLQuery.Transaction;LookUpQuery := TSQLQuery.Create (nil);
-     DataSrc := TDataSource.Create (nil);
-
-     LookUpQuery.DataSource := DataSrc;
-
      LookUpQuery.DataBase := EDBSQLQuery.DataBase;
      LookUpQuery.Transaction := EDBSQLQuery.Transaction;
 
@@ -178,13 +178,17 @@ var
   i: integer;
 begin
   for i := 0 to high (DBEditors) do begin
-    SetLength (Params, length (Params) + 1);
-    Params[i] := DBEditors[i].EDBEdit.Caption;
+    if (not DBEditors[i].IsReference) then begin
+      SetLength (Params, length (Params) + 1);
+      Params[i] := DBEditors[i].EDBEdit.Caption;
+    end;
   end;
 
   if (not IsInsert) then UpdateQuery else InsertQuery;
+  MSQLQuery.Close();
   MTransaction.Commit;
-  ShowTable(MSQLQuery, MDBGrid, ETable);
+  if (not IsSchedule) then
+    ShowTable(MSQLQuery, MDBGrid, ETable);
   Close;
 end;
 
@@ -199,9 +203,10 @@ var
 begin
   ShowUpdateTable (MSQLQuery, DeleteQuery, Params);
   BtnClick := MessageDlg ('Вы уверенны, что хотите удалить поле?', mtConfirmation,
-  mbOKCancel, 0);
+    mbOKCancel, 0);
   if (BtnClick = mrOK) then MTransaction.Commit else MTransaction.Rollback;
-  ShowTable(MSQLQuery, MDBGrid, ETable);
+  if (not IsSchedule) then
+    ShowTable(MSQLQuery, MDBGrid, ETable);
   Close;
 end;
 
@@ -218,11 +223,44 @@ var
 begin
   inherited Create(TheOwner);
   ETable := aTable;
-  MSQLQuery := aSQLQuery;
   MDBGrid := aDBGrid;
   MTransaction := aTransaction;
+  MSQLQuery := aSQLQuery;
+  IsSchedule := false;
 
-  ID := MSQLQuery.Fields[0].AsInteger;
+  ID := aSQLQuery.Fields[0].AsInteger;
+  IsInsert := aIsInsert;
+
+  for i := 0 to high (ETable.ColumnInfos) do begin
+    if (ETable.ColumnInfos[i].VisableColumn = true) then begin
+       AddEditor (ETable.ColumnInfos[i], Self, MSQLQuery.Fields[i].AsString,
+       ETable.ColumnInfos[i].Reference, MSQLQuery, i, aIsInsert);
+    end;
+  end;
+end;
+
+constructor TEditForm.Create(TheOwner: TComponent; aTable: TTableInfo;
+  aTransaction: TSQLTransaction; aID: integer; aSQLQuery: TSQLQuery;
+  aIsInsert: Boolean);
+var
+  i: integer;
+  DataSrc: TDataSource;
+begin
+  inherited Create(TheOwner);
+  ETable := aTable;
+  MTransaction := aTransaction;
+  IsSchedule := true;
+  MSQLQuery := aSQLQuery;
+
+  //DataSrc := TDataSource.Create (nil);
+  //MSQLQuery := TSQLQuery.Create (nil);
+  //MSQLQuery.DataSource := DataSrc;
+  //MSQLQuery.DataBase := MTransaction.DataBase;
+  //MSQLQuery.Transaction := MTransaction;
+
+  SetQuery (MSQLQuery, CreateQuery (ETable));
+
+  ID := aID;
   IsInsert := aIsInsert;
 
   for i := 0 to high (ETable.ColumnInfos) do begin
@@ -245,7 +283,7 @@ end;
 function TEditForm.DeleteQuery: string;
 begin
   Result += Format ('Delete from %s Where %s.ID = %s',
-  [ETable.Name, ETable.Name, IntToStr (ID)]);
+    [ETable.Name, ETable.Name, IntToStr (ID)]);
 end;
 
 function TEditForm.InsertEdit: string;

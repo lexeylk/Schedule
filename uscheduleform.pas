@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Grids,
   StdCtrls, Buttons, CheckLst, ExtCtrls, metadata, sqldb, DB, querycreate,
-  ufilter;
+  ufilter, ueditform;
 
 type
 
@@ -21,6 +21,11 @@ type
     Caption: string;
   end;
 
+  TItems =  record
+    ID: integer;
+    Item: array of string;
+  end;
+
   TColumnRowNames = array of TColumnRowName;
 
   { TScheduleForm }
@@ -29,8 +34,8 @@ type
     AddFilterBtn: TBitBtn;
     CheckGroup: TCheckGroup;
     DeleteBtn: TBitBtn;
-    Label1: TLabel;
-    Label2: TLabel;
+    //Label1: TLabel;
+    //Label2: TLabel;
     ResetBtn: TBitBtn;
     RefreshButton: TButton;
     DataSource: TDataSource;
@@ -38,33 +43,48 @@ type
     LabelY: TLabel;
     FilterScrollBox: TScrollBox;
     SQLQuery: TSQLQuery;
+    SQLTransaction: TSQLTransaction;
     XFieldCmbBox: TComboBox;
     YFieldCmbBox: TComboBox;
     Grid: TDrawGrid;
     procedure AddFilterBtnClick(Sender: TObject);
     procedure CheckGroupItemClick(Sender: TObject; Index: integer);
     procedure DeleteBtnClick(Sender: TObject);
+    procedure EditFormClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure GridClick(Sender: TObject);
     procedure GridDblClick(Sender: TObject);
     procedure GridDrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
     procedure FormCreate(Sender: TObject);
+    procedure GridMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure GridMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure RefreshButtonClick(Sender: TObject);
     procedure ResetBtnClick(Sender: TObject);
   private
     XTitles: array of TColumnRowName;
     YTitles: array of TColumnRowName;
-    Items: array of array of array of array of string;
+    Items: array of array of array of TItems;
     FCols: array of TColumnInfo;
     FFlag: Boolean;
     CurrentHeight: integer;
+    CurrPoint: TPoint;
     VisibleColumn: array of Boolean;
+    GridEditBtn: TRect;
+    GridDeleteBtn: TRect;
+    GridInsertBtn: TRect;
     CurrColRow: TCurrColRow;
+    CurCol: integer;
+    CurRow: integer;
+    CurRecord: integer;
     function CreateScheduleQuery: string;
     procedure FillItems;
+    procedure ButtonClick (aRect: TRect; IsInsert: Boolean);
     procedure FillRowTitles;
     procedure FillColumnTitles;
     procedure FillCmbBoxes;
     procedure SetColsRows;
+    procedure DrawButton (aRect: TRect);
     procedure Refresh;
     function GetLookUpResult(aTable: TTableInfo): TColumnRowNames;
   public
@@ -107,6 +127,23 @@ begin
   Refresh;
 end;
 
+procedure TScheduleForm.GridMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  CurrPoint.X := X;
+  CurrPoint.Y := Y;
+end;
+
+procedure TScheduleForm.GridMouseMove(Sender: TObject; Shift: TShiftState; X,
+  Y: Integer);
+begin
+  with Grid do begin
+    MouseToCell (X, Y, CurCol, CurRow);
+    CurRecord := (Y - CellRect (CurCol, CurRow).Top) div CurrentHeight;
+    Invalidate;
+  end;
+end;
+
 procedure TScheduleForm.RefreshButtonClick(Sender: TObject);
 begin
   Refresh;
@@ -136,6 +173,7 @@ var
   i, j: Integer;
   CurrHeight: Integer;
 begin
+
   CurrHeight := 0;
   if (aRow = 0) and (aCol = 0) then
     Exit;
@@ -150,16 +188,46 @@ begin
     else
       if (((aRow - 1) <= high (Items)) and ((aCol - 1) <= high (Items[aRow - 1]))) then
         for i := 0 to high (Items[aRow - 1][aCol - 1]) do begin
-          for j := 0 to high (Items[aRow - 1][aCol - 1][i]) do begin
+
+          Grid.Canvas.Brush.Color := clWhite;
+          Grid.Canvas.Brush.Style := bsClear;
+
+          for j := 0 to high (Items[aRow - 1][aCol - 1][i].Item) do begin
             if (VisibleColumn[j]) then begin
-              TextOut (aRect.Left + LeftSpace, aRect.Top + CurrHeight, FCols[j].Caption + ': ' + Items[aRow - 1][aCol - 1][i][j]);
+              //ShowMessage (Items[aRow - 1][aCol - 1][i].Item[j]);
+              TextOut (aRect.Left + LeftSpace, aRect.Top + CurrHeight, FCols[j].Caption + ': ' + Items[aRow - 1][aCol - 1][i].Item[j]);
               CurrHeight += ElemHeight;
             end;
           end;
+
+          Grid.Canvas.Brush.Color := clBlack;
+          Grid.Canvas.Brush.Style := bsSolid;
+
+          if (aRow = CurRow) and (aCol = CurCol) and (i = CurRecord) then begin
+            with aRect do begin
+              GridEditBtn := Rect (Right - 20, Top + CurrHeight - 130, Right - 10, Top + CurrHeight - 120);
+              DrawButton (GridEditBtn);
+            end;
+          end;
+
           Line (aRect.Left, aRect.Top + CurrHeight, aRect.Right, aRect.Top + CurrHeight);
           CurrHeight += 5;
-          CurrentHeight := CurrHeight;
         end;
+
+    Brush.Color := clBlack;
+    Brush.Style := bsSolid;
+
+    with aRect do begin
+      if (CurRow = aRow) and (CurCol = aCol) and (aCol > 0) and (aRow > 0) then begin
+        GridInsertBtn := Rect (Left, Top, Left + 20, Top + 20);
+        DrawButton (GridInsertBtn);
+      end;
+
+      if (aRow > 0) and (aCol > 0) and (Grid.RowHeights[aRow] < ((CurrentHeight + 4) * length (Items[aRow - 1][aCol - 1]) - 4)) then begin
+        FillRect (aRect.Right - 10, aRect.Bottom - 10, aRect.Right, aRect.Bottom);
+      end;
+    end;
+
   end;
 end;
 
@@ -167,14 +235,16 @@ procedure TScheduleForm.GridDblClick(Sender: TObject);
 begin
   with Grid do begin
     if ((CurrColRow.aCol = Col) and (CurrColRow.aRow = Row)) then begin
-      RowHeights[Row] := 160;
+      RowHeights[Row] := CurrentHeight;
       CurrColRow.aCol := 0;
       CurrColRow.aRow := 0;
     end
     else begin
-      RowHeights[Row] := 165 * length (Items[Row - 1][Col - 1]);
-      CurrColRow.aCol := Col;
-      CurrColRow.aRow := Row;
+      if (length (Items[Row - 1][Col - 1]) <> 0) then begin
+        RowHeights[Row] := (CurrentHeight + 4) * length (Items[Row - 1][Col - 1]);
+        CurrColRow.aCol := Col;
+        CurrColRow.aRow := Row;
+      end;
     end;
   end;
 end;
@@ -185,9 +255,27 @@ begin
 end;
 
 procedure TScheduleForm.CheckGroupItemClick(Sender: TObject; Index: integer);
+var
+  i: integer;
+  Count: integer;
 begin
+  Count := 0;
+
   VisibleColumn[Index] := TCheckGroup (Sender).Checked[Index];
+
+  for i := 0 to high (VisibleColumn) do begin
+    if (VisibleColumn[i]) then inc (Count);
+  end;
+
+  CurrentHeight := Count * 20;
   Grid.Invalidate;
+  with Grid do begin
+    for i := 1 to RowCount - 1 do begin
+      if (RowHeights[i] < CurrentHeight) then
+        RowHeights[i] := CurrentHeight;
+    end;
+  end;
+
 end;
 
 procedure TScheduleForm.DeleteBtnClick(Sender: TObject);
@@ -208,6 +296,19 @@ begin
     end;
 
   end;
+end;
+
+procedure TScheduleForm.EditFormClose(Sender: TObject;
+  var CloseAction: TCloseAction);
+begin
+  Refresh;
+end;
+
+procedure TScheduleForm.GridClick(Sender: TObject);
+begin
+  ButtonClick (GridEditBtn, false);
+  ButtonClick (GridInsertBtn, true);
+  Grid.Invalidate;
 end;
 
 function TScheduleForm.CreateScheduleQuery: string;
@@ -298,9 +399,7 @@ begin
            end;
            Query += CreateFQuery;
          end;
-       end
-       else
-         ShowMessage ('Добавьте фильтры');
+       end;
       end;
 
     end;
@@ -344,16 +443,16 @@ begin
           Inc(j);
 
         SetLength(Items[i][j], length(Items[i][j]) + 1);
-        SetLength(Items[i][j][high(Items[i][j])], ColumnLen);
+        SetLength(Items[i][j][high(Items[i][j])].Item, ColumnLen);
 
         for k := 0 to high(FCols) do
         begin
-          //ShowMessage (ColumnInfos[k].AliasName);
-          Items[i][j][high(Items[i][j])][k] :=
+          //ShowMessage (GetTableByName(FCols[k].ReferenceTable).ColumnInfos[0].AliasName);
+          Items[i][j][high(Items[i][j])].Item[k] :=
             FieldByName(GetTableByName(FCols[k].ReferenceTable).ColumnInfos[1].AliasName).AsString;
-
-          //ShowMessage (Items[i][j][high (Items[i][j])][k]);
+          //ShowMessage (IntToStr(Items[i][j][high(Items[i][j])].ID));
         end;
+        Items[i][j][high(Items[i][j])].ID := FieldByName('Schedule_itemsID').AsInteger;
 
         Next;
       end;
@@ -361,6 +460,24 @@ begin
     end;
 
     FFlag := true;
+end;
+
+procedure TScheduleForm.ButtonClick(aRect: TRect; IsInsert: Boolean);
+var
+  NewForm: TEditForm;
+begin
+  with (aRect) do begin
+    with (CurrPoint) do begin
+      if (Left < X) and (Right > X) and (Top < Y) and (Bottom > Y) then begin
+        if (IsInsert) then
+           NewForm := TEditForm.Create (ScheduleForm, ScheduleTable, SQLTransaction, 0, SQLQuery, IsInsert)
+        else
+           NewForm := TEditForm.Create (ScheduleForm, ScheduleTable, SQLTransaction, Items[CurRow - 1][CurCol - 1][CurRecord].ID, SQLQuery, IsInsert);
+        NewForm.Show;
+        NewForm.OnClose := @EditFormClose;
+      end;
+    end;
+  end;
 end;
 
 procedure TScheduleForm.FillRowTitles;
@@ -432,6 +549,11 @@ begin
     RowHeights[0] := 30;
   end;
   CurrentHeight := 160;
+end;
+
+procedure TScheduleForm.DrawButton(aRect: TRect);
+begin
+  Grid.Canvas.FillRect (aRect);
 end;
 
 initialization
