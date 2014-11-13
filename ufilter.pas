@@ -45,6 +45,7 @@ type
     destructor Destroy; override;
     procedure FilterInterfae (aOwner: TWinControl);
     function GetQuery (aIndex: integer): string;
+    function GetCondition: string;
   end;
 
   { TListOfFilters }
@@ -223,6 +224,11 @@ begin
          FTable.ColumnInfos[FComBoColumn.ItemIndex + 1].ReferenceColumn,
          IntToStr (aIndex)]);
   //ShowMessage (Result);
+end;
+
+function TFilter.GetCondition: string;
+begin
+  Result := FCondition.Conditions[FComBoCondition.ItemIndex].Caption;
 end;
 
 end.

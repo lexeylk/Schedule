@@ -27,13 +27,17 @@ type
   end;
 
   TColumnRowNames = array of TColumnRowName;
+  TScheduleData = array of array of array of TItems;
 
   { TScheduleForm }
 
   TScheduleForm = class(TForm)
     AddFilterBtn: TBitBtn;
+    ExportBtn: TButton;
     CheckGroup: TCheckGroup;
     DeleteBtn: TBitBtn;
+    Label1: TLabel;
+    Label2: TLabel;
     //Label1: TLabel;
     //Label2: TLabel;
     ResetBtn: TBitBtn;
@@ -51,6 +55,7 @@ type
     procedure CheckGroupItemClick(Sender: TObject; Index: integer);
     procedure DeleteBtnClick(Sender: TObject);
     procedure EditFormClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure ExportBtnClick(Sender: TObject);
     procedure GridClick(Sender: TObject);
     procedure GridDblClick(Sender: TObject);
     procedure GridDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -64,12 +69,11 @@ type
   private
     XTitles: array of TColumnRowName;
     YTitles: array of TColumnRowName;
-    Items: array of array of array of TItems;
+    Items: TScheduleData;
     FCols: array of TColumnInfo;
     FFlag: Boolean;
     CurrentHeight: integer;
     CurrPoint: TPoint;
-    VisibleColumn: array of Boolean;
     GridEditBtn: TRect;
     GridDeleteBtn: TRect;
     GridInsertBtn: TRect;
@@ -88,7 +92,7 @@ type
     procedure Refresh;
     function GetLookUpResult(aTable: TTableInfo): TColumnRowNames;
   public
-    { public declarations }
+    VisibleColumn: array of Boolean;
   end;
 
 var
@@ -97,6 +101,8 @@ var
   ListOfFilters: TListOfFilters;
 
 implementation
+
+uses UExport;
 
 {$R *.lfm}
 
@@ -302,6 +308,12 @@ procedure TScheduleForm.EditFormClose(Sender: TObject;
   var CloseAction: TCloseAction);
 begin
   Refresh;
+end;
+
+procedure TScheduleForm.ExportBtnClick(Sender: TObject);
+begin
+  SchExport.ExportToFile(Items, XTitles, YTitles, FCols[XFieldCmbBox.ItemIndex],
+    FCols[YFieldCmbBox.ItemIndex], ListOfFilters, FCols);
 end;
 
 procedure TScheduleForm.GridClick(Sender: TObject);

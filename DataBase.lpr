@@ -8,7 +8,7 @@ uses
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, main, metadata, utableform, querycreate, ufilter, ueditform,
-UScheduleForm
+  UScheduleForm, UExport
   { you can add units after this };
 
 {$R *.res}

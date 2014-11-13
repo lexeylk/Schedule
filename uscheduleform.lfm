@@ -1,11 +1,11 @@
 object ScheduleForm: TScheduleForm
-  Left = 252
+  Left = 207
   Height = 750
-  Top = 107
+  Top = 182
   Width = 1370
   Caption = 'ScheduleForm'
-  ClientHeight = 0
-  ClientWidth = 0
+  ClientHeight = 750
+  ClientWidth = 1370
   OnCreate = FormCreate
   LCLVersion = '1.0.14.0'
   object Grid: TDrawGrid
@@ -58,10 +58,10 @@ object ScheduleForm: TScheduleForm
     ParentColor = False
   end
   object RefreshButton: TButton
-    Left = 160
+    Left = 72
     Height = 38
     Top = 64
-    Width = 146
+    Width = 139
     Caption = 'Обновить'
     OnClick = RefreshButtonClick
     TabOrder = 3
@@ -119,6 +119,15 @@ object ScheduleForm: TScheduleForm
     ChildSizing.ControlsPerLine = 1
     OnItemClick = CheckGroupItemClick
     TabOrder = 8
+  end
+  object ExportBtn: TButton
+    Left = 248
+    Height = 38
+    Top = 64
+    Width = 136
+    Caption = 'Экспорт'
+    OnClick = ExportBtnClick
+    TabOrder = 9
   end
   object SQLQuery: TSQLQuery
     FieldDefs = <>

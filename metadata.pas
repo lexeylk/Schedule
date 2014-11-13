@@ -26,10 +26,12 @@ type
     AliasName: string;
   end;
 
+  TColumnInfos = array of TColumnInfo;
+
   { TTableInfo }
 
   TTableInfo = class
-    ColumnInfos: array of TColumnInfo;
+    ColumnInfos: TColumnInfos;
     Name: string;
     Caption: string;
     GenerateName: string;
